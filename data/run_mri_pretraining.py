@@ -20,18 +20,22 @@ from drim.commons.losses import ContrastiveLoss
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--data_path", type=str, default="../TCGA/GBMLGG/MRI")
+    # parser.add_argument("--data_path", type=str, default="../TCGA/GBMLGG/MRI")
+    parser.add_argument("--data_path", type=str, default="/data/BraTS_2023/MRI")
     parser.add_argument("--batch_size", type=int, default=48)
     parser.add_argument("--epochs", type=int, default=30)
     parser.add_argument("--lr", type=float, default=1e-4)
-    parser.add_argument("--modalities", nargs="+", default=["t1ce", "flair"])
+    # parser.add_argument("--modalities", nargs="+", default=["t1ce", "flair"])
+    parser.add_argument("--modalities", nargs="+", default=["t1c", "t2f"])
     parser.add_argument("--weight_decay", type=float, default=1e-6)
-    parser.add_argument("--entity", type=str, default=None)
+    parser.add_argument("--entity", type=str, default="dmitriykornilov_team")
     parser.add_argument("--project", type=str, default="DRIM")
     parser.add_argument("--temperature", type=float, default=0.07)
     parser.add_argument("--tumor_centered", type=bool, default=True)
-    parser.add_argument("--n_cpus", type=int, default=40)
-    parser.add_argument("--n_gpus", type=int, default=4)
+    # parser.add_argument("--n_cpus", type=int, default=40)
+    # parser.add_argument("--n_gpus", type=int, default=4)
+    parser.add_argument("--n_cpus", type=int, default=8)
+    parser.add_argument("--n_gpus", type=int, default=1)
     parser.add_argument("--k", type=int, default=3)
     parser.add_argument("--seed", type=int, default=1999)
     args = parser.parse_args()
@@ -39,6 +43,19 @@ if __name__ == "__main__":
     # Set seed
     seed_everything(args.seed)
     patients = os.listdir(args.data_path)
+    print("Total patients", len(patients))
+
+    #get patients only with target modalities
+    patients_with_needed_modalities = []
+    needed_modalities = set(args.modalities)
+    needed_modalities.add("seg") #segmentation mask used to compute center of tumor
+    for patient in patients:
+        available_modalities = set([x.split("-")[-1].split(".")[0] for x in os.listdir(os.path.join(args.data_path, patient))])
+        if needed_modalities.intersection(available_modalities) == needed_modalities:
+            patients_with_needed_modalities.append(patient)
+    patients = patients_with_needed_modalities
+    print("Patients with all needed modalities", len(patients))
+
     dataframe = pd.read_csv("data/files/dataframe_brain.csv")
     dataframe_test = dataframe[dataframe["group"] == "test"]
     # get patient ids where MRI is not NaN
@@ -47,6 +64,8 @@ if __name__ == "__main__":
         patient_path.split("/")[-1] for patient_path in dataframe_test.MRI.values
     ]
     patients = [patient for patient in patients if patient not in patients_to_exclude]
+    print("Included patients (pre-train)", len(patients))
+    print("Excluded patients (further test)", len(patients_to_exclude))
 
     # split patient into train and val by taking random 70% of patients for training
     train_patients = np.random.choice(
@@ -104,12 +123,15 @@ if __name__ == "__main__":
         sum(p.numel() for p in model.parameters() if p.requires_grad),
     )
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
     if args.n_gpus > 1:
         model = torch.nn.DataParallel(model, device_ids=list(range(args.n_gpus)))
 
     model.to(device)
     logger.info("Using {} gpus to train the model", args.n_gpus)
+    torch.cuda.reset_peak_memory_stats(device=device)
+    logger.info(
+        f"gpu used {torch.cuda.max_memory_allocated(device=device)} memory"
+    )
 
     contrastive_loss = ContrastiveLoss(temperature=args.temperature, k=args.k)
 

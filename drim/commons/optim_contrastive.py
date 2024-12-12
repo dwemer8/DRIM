@@ -1,4 +1,5 @@
 # Standard libraries
+import os
 from collections import defaultdict
 from typing import Tuple
 
@@ -57,9 +58,9 @@ def training_loop_contrastive(
         print(f"Training loss: {epoch_loss:.4f}")
 
         metrics["train/loss"].append(epoch_loss)
-        metrics["train/top_1"].append(top_1 / len(train_dl.dataset))
-        metrics[f"train/top_{k}"].append(top_k / len(train_dl.dataset))
-        metrics["train/mean_pos"].append(mean_pos / len(train_dl.dataset))
+        metrics["train/top_1"].append((top_1 / len(train_dl.dataset)).item())
+        metrics[f"train/top_{k}"].append((top_k / len(train_dl.dataset)).item())
+        metrics["train/mean_pos"].append((mean_pos / len(train_dl.dataset)).item())
         model.eval()
         with torch.no_grad():
             val_loss = 0.0
@@ -85,17 +86,26 @@ def training_loop_contrastive(
 
         val_loss /= len(valid_dl.dataset)
         print(f"Validation loss: {val_loss:.4f}")
-        metrics["val/top_1"].append(top_1 / len(valid_dl.dataset))
-        metrics[f"val/top_{k}"].append(top_k / len(valid_dl.dataset))
-        metrics["val/mean_pos"].append(mean_pos / len(valid_dl.dataset))
+        metrics["val/top_1"].append((top_1 / len(valid_dl.dataset)).item())
+        metrics[f"val/top_{k}"].append((top_k / len(valid_dl.dataset)).item())
+        metrics["val/mean_pos"].append((mean_pos / len(valid_dl.dataset)).item())
         metrics["val/loss"].append(val_loss)
-
-        if wandb_logging:
-            wandb.log({k: v[-1] for k, v in metrics.items()})
 
         scheduler.step()
         if metrics["val/loss"][-1] < best_loss:
             best_loss = metrics["val/loss"][-1]
+            dir_to_save = os.path.join(*path_to_save.split(os.sep)[:-1])
+            if not os.path.exists(dir_to_save): os.makedirs(dir_to_save, exist_ok=True)
             torch.save(model.state_dict(), path_to_save)
+
+        if wandb_logging:
+            try:
+                wandb.log({k: v[-1] for k, v in metrics.items()})
+
+            except Exception as e:
+                logger.info(
+                    f"Metrics haven't been logged in wandb due to {e}"
+                )
+                print({k: v[-1] for k, v in metrics.items()})
 
     return model, metrics

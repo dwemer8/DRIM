@@ -38,7 +38,8 @@ class _BaseDatasetBraTS(Dataset):
         if len(self.modality) == 1:
             img = nib.load(
                 os.path.join(
-                    self.path, patient, patient + "_" + self.modality[0] + ".nii.gz"
+                    # self.path, patient, patient + "_" + self.modality[0] + ".nii.gz"
+                    self.path, patient, patient + "-" + self.modality[0] + ".nii.gz"
                 )
             ).get_fdata()
             img = np.expand_dims(img, 0)
@@ -49,7 +50,8 @@ class _BaseDatasetBraTS(Dataset):
                 early_fused.append(
                     nib.load(
                         os.path.join(
-                            self.path, patient, patient + "_" + modality + ".nii.gz"
+                            # self.path, patient, patient + "_" + modality + ".nii.gz"
+                            self.path, patient, patient + "-" + modality + ".nii.gz"
                         )
                     ).get_fdata()
                 )
@@ -68,7 +70,8 @@ class _BaseDatasetBraTS(Dataset):
 
     def _load_mask(self, patient: str) -> np.ndarray:
         return nib.load(
-            os.path.join(self.path, patient, patient + "_seg.nii.gz")
+            # os.path.join(self.path, patient, patient + "_seg.nii.gz")
+            os.path.join(self.path, patient, patient + "-seg.nii.gz")
         ).get_fdata()
 
 
@@ -202,7 +205,8 @@ class MRIProcessor:
     def _load_nifti_modalities(self, base_path: str, patient: str) -> np.ndarray:
         if len(self.modalities) == 1:
             img = nib.load(
-                os.path.join(base_path, patient + "_" + self.modality[0] + ".nii.gz")
+                # os.path.join(base_path, patient + "_" + self.modality[0] + ".nii.gz")
+                os.path.join(base_path, patient + "-" + self.modality[0] + ".nii.gz")
             ).get_fdata()
             img = np.expand_dims(img, 0)
 
@@ -211,7 +215,8 @@ class MRIProcessor:
             for modality in self.modalities:
                 early_fused.append(
                     nib.load(
-                        os.path.join(base_path, patient + "_" + modality + ".nii.gz")
+                        # os.path.join(base_path, patient + "_" + modality + ".nii.gz")
+                        os.path.join(base_path, patient + "-" + modality + ".nii.gz")
                     ).get_fdata()
                 )
 
@@ -220,7 +225,8 @@ class MRIProcessor:
         return img
 
     def _load_mask(self, base_path: str, patient: str) -> np.ndarray:
-        return nib.load(os.path.join(base_path, patient + "_seg.nii.gz")).get_fdata()
+        # return nib.load(os.path.join(base_path, patient + "_seg.nii.gz")).get_fdata()
+        return nib.load(os.path.join(base_path, patient + "-seg.nii.gz")).get_fdata()
 
     def process(self) -> torch.Tensor:
         patient = self.base_path.split("/")[-1]

@@ -1,4 +1,7 @@
-
+wandb:
+  entity: dmitriykornilov_team
+  project: DRIM
+  
 general:
   seed: 1999
   val_split: 4

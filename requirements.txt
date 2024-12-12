@@ -12,3 +12,8 @@ hydra-core==1.3.2
 einops==0.6.1
 pycox==0.2.3
 loguru
+torchinfo
+nibabel
+
+#apt install libvips
+#apt install ffmpeg libsm6 libxext6 -y
