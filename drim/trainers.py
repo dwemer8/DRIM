@@ -1,3 +1,4 @@
+import os
 import torch.nn as nn
 from typing import Dict, Optional
 from torchinfo import summary
@@ -112,6 +113,9 @@ class _BaseTrainer:
                 wandb.log({key: value[-1] for key, value in metrics.items()})
 
             self.scheduler.step()
+
+        dir_to_save = os.path.join(*self.cfg.general.save_path.split(os.sep)[:-1])
+        if not os.path.exists(dir_to_save): os.makedirs(dir_to_save, exist_ok=True)
         torch.save(self.model.state_dict(), self.cfg.general.save_path)
 
     def evaluate(self, split: str) -> Dict[str, float]:

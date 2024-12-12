@@ -50,22 +50,22 @@ def main(cfg: DictConfig) -> None:
         # Load the data
         dataframes = get_dataframes(fold)
         # take only the intersection between multimodal data and unimodal to ensure fair comparisons
-        dataframes_multi = {
-            split: prepare_data(dataframe, ["DNAm", "WSI", "RNA", "MRI"])
-            for split, dataframe in dataframes.items()
-        }
+        # dataframes_multi = {
+        #     split: prepare_data(dataframe, ["DNAm", "WSI", "RNA", "MRI"])
+        #     for split, dataframe in dataframes.items()
+        # }
 
         dataframes = {
             split: prepare_data(dataframe, cfg.general.modalities)
             for split, dataframe in dataframes.items()
         }
 
-        dataframes = {
-            split: dataframe[
-                dataframe["submitter_id"].isin(dataframes_multi[split]["submitter_id"])
-            ]
-            for split, dataframe in dataframes.items()
-        }
+        # dataframes = {
+        #     split: dataframe[
+        #         dataframe["submitter_id"].isin(dataframes_multi[split]["submitter_id"])
+        #     ]
+        #     for split, dataframe in dataframes.items()
+        # }
         cfg.general.save_path = (
             f"./models/{cfg.general.modalities}_split_{int(fold)}.pth"
         )

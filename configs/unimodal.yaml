@@ -16,7 +16,7 @@ general:
 dataloader:
   batch_size: 24
   pin_memory: true
-  num_workers: 40
+  num_workers: 8
   persistent_workers: true
 
 optimizer:
