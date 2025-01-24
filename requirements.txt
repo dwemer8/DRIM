@@ -15,5 +15,6 @@ loguru
 torchinfo
 nibabel
 
+#pre-requisites
 #apt install libvips
 #apt install ffmpeg libsm6 libxext6 -y
