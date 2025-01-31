@@ -5,6 +5,7 @@ from typing import Dict
 import pandas as pd
 from omegaconf import DictConfig
 from pycox.models import LogisticHazard
+from omegaconf import DictConfig, OmegaConf
 
 # Local dependencies
 from drim.utils import prepare_data, get_target_survival, log_transform
@@ -75,13 +76,14 @@ def get_datasets(
     modality: str,
     fold: int,
     return_mask: bool = False,
+    cfg: DictConfig = None
 ):
     if modality == "DNAm":
         from drim.dnam import DNAmDataset
 
         datasets = {
-            split: DNAmDataset(dataframe, return_mask=return_mask)
-            for split, dataframe in dataframes.items()
+            split: DNAmDataset(dataframe, return_mask=return_mask, base_path=cfg.base_path.get("dna", None) if cfg is not None else None)
+            for split, dataframe in dataframes.items() 
         }
     elif modality == "RNA":
         from drim.rna import RNADataset
@@ -89,7 +91,7 @@ def get_datasets(
 
         rna_processor = load(f"./data/rna_preprocessors/trf_{int(fold)}.joblib")
         datasets = {
-            split: RNADataset(dataframe, rna_processor, return_mask=return_mask)
+            split: RNADataset(dataframe, rna_processor, return_mask=return_mask, base_path=cfg.base_path.get("rna", None) if cfg is not None else None)
             for split, dataframe in dataframes.items()
         }
     elif modality == "WSI":
@@ -97,20 +99,20 @@ def get_datasets(
 
         datasets = {}
         datasets["train"] = WSIDataset(
-            dataframes["train"], k=10, is_train=True, return_mask=return_mask
+            dataframes["train"], k=10, is_train=True, return_mask=return_mask, base_path=cfg.base_path.get("wsi", None) if cfg is not None else None
         )
         datasets["val"] = WSIDataset(
-            dataframes["val"], k=10, is_train=False, return_mask=return_mask
+            dataframes["val"], k=10, is_train=False, return_mask=return_mask, base_path=cfg.base_path.get("wsi", None) if cfg is not None else None
         )
         datasets["test"] = WSIDataset(
-            dataframes["test"], k=10, is_train=False, return_mask=return_mask
+            dataframes["test"], k=10, is_train=False, return_mask=return_mask, base_path=cfg.base_path.get("wsi", None) if cfg is not None else None
         )
 
     elif modality == "MRI":
         from drim.mri import MRIEmbeddingDataset
 
         datasets = {
-            split: MRIEmbeddingDataset(dataframe, return_mask=return_mask)
+            split: MRIEmbeddingDataset(dataframe, return_mask=return_mask, base_path=cfg.base_path.get("mri", None) if cfg is not None else None)
             for split, dataframe in dataframes.items()
         }
     else:

@@ -5,7 +5,7 @@ wandb:
 general:
   seed: 1999
   val_split: 4
-  modalities: DNAm
+  modalities: WSI
   n_outs: 20
   dropout: 0.2
   epochs: 50
@@ -28,3 +28,11 @@ optimizer:
 scheduler:
   T_max: ${general.epochs}
   eta_min: 5e-6
+
+data:
+  dataset_path: 'outputs/embeddings_wsi/updated_dataframe_with_emb.csv' #data/files/rna_dna_mri_dataset.csv 
+  base_path:
+    mri: '/mnt/data/d.kornilov/BraTS_2023/MRI'
+    rna: '/mnt/data/m.zubrikhina/TCGA/GBMLGG/RNA'
+    dna: '/mnt/data/m.zubrikhina/TCGA/GBMLGG/DNAm'
+    wsi: null

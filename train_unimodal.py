@@ -48,7 +48,7 @@ def main(cfg: DictConfig) -> None:
         logger.info("Starting fold {}", fold)
         seed_everything(cfg.general.seed)
         # Load the data
-        dataframes = get_dataframes(fold)
+        dataframes = get_dataframes(fold, cfg.data.dataset_path)
         # take only the intersection between multimodal data and unimodal to ensure fair comparisons
         # dataframes_multi = {
         #     split: prepare_data(dataframe, ["DNAm", "WSI", "RNA", "MRI"])
@@ -76,7 +76,7 @@ def main(cfg: DictConfig) -> None:
         logger.info("Loading model and preparing corresponding dataset...")
         encoder = get_encoder(cfg.general.modalities, cfg)
         datasets = get_datasets(
-            dataframes, cfg.general.modalities, fold, return_mask=False
+            dataframes, cfg.general.modalities, fold, return_mask=False, cfg=cfg.get("data", default_value={})
         )
         targets, cuts = get_targets(dataframes, cfg.general.n_outs)
         train_data = SurvivalDataset(datasets["train"], *targets["train"])

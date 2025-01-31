@@ -88,11 +88,21 @@ def seed_worker(worker_id):
     random.seed(worker_seed)
 
 
-def get_dataframes(fold: int) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
-    dataframe = pd.read_csv("data/files/train_brain.csv")
+# def get_dataframes(fold: int) -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+#     dataframe = pd.read_csv("data/files/train_brain.csv")
+#     dataframe_train = (
+#         dataframe[dataframe["split"] != fold].copy().drop(columns=["split"])
+#     )
+#     dataframe_val = dataframe[dataframe["split"] == fold].copy().drop(columns=["split"])
+#     dataframe_test = pd.read_csv("data/files/test_brain.csv")
+#     return {"train": dataframe_train, "val": dataframe_val, "test": dataframe_test}
+
+def get_dataframes(fold: int, dataframe_path: str = "data/files/dataframe.csv") -> Tuple[pd.DataFrame, pd.DataFrame, pd.DataFrame]:
+    dataframe = pd.read_csv(dataframe_path)
+    dataframe_train_val = dataframe[dataframe['group'] == 'train']
+    dataframe_test = dataframe[dataframe['group'] == 'test']
     dataframe_train = (
-        dataframe[dataframe["split"] != fold].copy().drop(columns=["split"])
+        dataframe_train_val[dataframe_train_val["splits"] != fold].copy().drop(columns=["splits"])
     )
-    dataframe_val = dataframe[dataframe["split"] == fold].copy().drop(columns=["split"])
-    dataframe_test = pd.read_csv("data/files/test_brain.csv")
+    dataframe_val = dataframe_train_val[dataframe_train_val["splits"] == fold].copy().drop(columns=["splits"])
     return {"train": dataframe_train, "val": dataframe_val, "test": dataframe_test}

@@ -241,14 +241,23 @@ class MRIProcessor:
 
 
 class MRIEmbeddingDataset(_BaseDataset):
-    def __init__(self, dataframe, return_mask: bool = False):
-        super().__init__(dataframe, return_mask)
+    def __init__(self, dataframe, return_mask: bool = False, base_path: str = None):
+        super().__init__(dataframe, return_mask, base_path)
 
     def __getitem__(self, idx: int) -> Union[Tuple[torch.Tensor, bool], torch.Tensor]:
         sample = self.dataframe.iloc[idx]
         if not pd.isna(sample.MRI):
+            file_path = None
+            if self.base_path is not None:
+                file_path = os.path.join(
+                    self.base_path, 
+                    sample.MRI.split(os.sep)[-1] #patient
+                )
+            else:
+                file_path = sample.MRI
+
             mri = torch.from_numpy(
-                pd.read_csv(os.path.join(sample.MRI, "embedding.csv")).values[0]
+                pd.read_csv(os.path.join(file_path, "embedding.csv")).values[0]
             ).float()
             mask = True
         else:

@@ -8,9 +8,10 @@ __all__ = ["SurvivalDataset"]
 
 
 class _BaseDataset(torch.utils.data.Dataset):
-    def __init__(self, dataframe: pd.DataFrame, return_mask: bool = False) -> None:
+    def __init__(self, dataframe: pd.DataFrame, return_mask: bool = False, base_path: str = None) -> None:
         self.dataframe = dataframe
         self.return_mask = return_mask
+        self.base_path = base_path
 
     @abstractmethod
     def __getitem__(self, idx: int):

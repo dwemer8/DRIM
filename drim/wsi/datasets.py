@@ -3,7 +3,7 @@ from PIL import Image
 import torch
 from ..datasets import _BaseDataset
 import pandas as pd
-
+import os
 
 class PatchDataset(torch.utils.data.Dataset):
     def __init__(
@@ -29,15 +29,27 @@ class WSIDataset(_BaseDataset):
         k: int,
         is_train: bool = True,
         return_mask: bool = False,
+        base_path: str = None
     ) -> None:
-        super().__init__(dataframe, return_mask)
+        super().__init__(dataframe, return_mask, base_path)
         self.k = k
         self.is_train = is_train
 
     def __getitem__(self, idx: int) -> Union[Tuple[torch.Tensor, bool], torch.Tensor]:
         sample = self.dataframe.iloc[idx]
         if not pd.isna(sample.WSI):
-            data = pd.read_csv(sample.WSI)
+            file_path = None
+            if self.base_path is not None:
+                file_path = os.path.join(
+                    self.base_path, 
+                    sample.WSI.split(os.sep)[-3], #wsi or TCGA-GBM_WSI
+                    sample.WSI.split(os.sep)[-2], #patient
+                    sample.WSI.split(os.sep)[-1] #file
+                )
+            else:
+                file_path = sample.WSI
+
+            data = pd.read_csv(file_path)
             # get k random embeddings
             if self.is_train:
                 data = data.sample(self.k)

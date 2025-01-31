@@ -2,8 +2,9 @@ __pycache__
 wandb/
 models/
 multirun/
-data/files/dataframe_brain.csv
-data/files/mri_pretrain.csv
-data/files/test_brain.csv
-data/files/train_brain.csv
+data/files/*
+!data/files/clinical_data.tsv
+!data/files/supplementary_data.tsv
 data/mappings/BraTS2023_2017_GLI_Mapping.xlsx
+notebooks/
+outputs/

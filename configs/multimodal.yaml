@@ -46,3 +46,11 @@ disentangled:
   gamma: 0.8
   dsm_lr: 1e-3
   dsm_wd: 3e-4
+
+data:
+  dataset_path: 'data/files/full_dataset.csv'
+  base_path:
+    mri: '/mnt/data/d.kornilov/BraTS_2023/MRI'
+    rna: '/mnt/data/m.zubrikhina/TCGA/GBMLGG/RNA'
+    dna: '/mnt/data/m.zubrikhina/TCGA/GBMLGG/DNAm'
+    wsi: null

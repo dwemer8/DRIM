@@ -49,7 +49,7 @@ def main(cfg: DictConfig) -> None:
         logger.info("Starting fold {}", fold)
         seed_everything(cfg.general.seed)
         # Load the data
-        dataframes = get_dataframes(fold)
+        dataframes = get_dataframes(fold, cfg.data.dataset_path)
         dataframes = {
             split: prepare_data(dataframe, cfg.general.modalities)
             for split, dataframe in dataframes.items()
@@ -70,7 +70,7 @@ def main(cfg: DictConfig) -> None:
             encoders[modality] = encoder
             encoder_u = get_encoder(modality, cfg).cuda()
             encoders_u[modality] = encoder_u
-            datasets = get_datasets(dataframes, modality, fold, return_mask=True)
+            datasets = get_datasets(dataframes, modality, fold, return_mask=True, cfg=cfg.get("data", default_value={}))
             train_datasets[modality] = datasets["train"]
             val_datasets[modality] = datasets["val"]
             test_datasets[modality] = datasets["test"]
