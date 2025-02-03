@@ -4,3 +4,15 @@ general:
   n_outs: 20
   dropout: 0.
   seed: 1999
+
+data:
+  dataset_path: 'data/files/full_dataset.csv'
+  base_path:
+    mri: '/mnt/data/d.kornilov/BraTS_2023/MRI'
+    rna: '/mnt/data/m.zubrikhina/TCGA/GBMLGG/RNA'
+    dna: '/mnt/data/m.zubrikhina/TCGA/GBMLGG/DNAm'
+    wsi: null
+
+wandb:
+  entity: dmitriykornilov_team
+  project: DRIM

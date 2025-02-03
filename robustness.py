@@ -5,7 +5,7 @@ from collections import defaultdict
 # Third-party libraries
 import pandas as pd
 import hydra
-from omegaconf import DictConfig
+from omegaconf import DictConfig, OmegaConf
 import torch
 import numpy as np
 from pycox.evaluation import EvalSurv
@@ -53,6 +53,7 @@ def prepare_data(
 
 @hydra.main(version_base=None, config_path="configs", config_name="robustness")
 def main(cfg: DictConfig) -> None:
+
     logger.info("Starting multimodal robustness test.")
     logger.info("Method tested {}.", cfg.method)
     modality_combinations = [
@@ -69,12 +70,26 @@ def main(cfg: DictConfig) -> None:
         ["DNAm", "WSI", "RNA", "MRI"],
     ]
     for combination in modality_combinations:
+        if "wandb" in cfg:
+            import wandb
+
+            wandb_logging = True
+            wandb.init(
+                name="robustness_" + cfg.method + "_"+ "_".join(combination),
+                config={
+                    k: v for k, v in OmegaConf.to_container(cfg).items() if k != "wandb"
+                },
+                **cfg.wandb,
+            )
+        else:
+            wandb_logging = False
+    
         if cfg.method == "tensor":
             cfg.general.dim = 32
         logs = defaultdict(list)
         for fold in range(5):
             seed_everything(cfg.general.seed)
-            dataframes = get_dataframes(fold)
+            dataframes = get_dataframes(fold, cfg.data.dataset_path)
             dataframes = {
                 split: prepare_data(dataframe, combination)
                 for split, dataframe in dataframes.items()
@@ -85,7 +100,7 @@ def main(cfg: DictConfig) -> None:
                 encoders_u = {}
 
             for modality in ["DNAm", "WSI", "RNA", "MRI"]:
-                datasets = get_datasets(dataframes, modality, fold, return_mask=True)
+                datasets = get_datasets(dataframes, modality, fold, return_mask=True, cfg=cfg.get("data", default_value={}))
                 test_datasets[modality] = datasets["test"]
                 encoder = get_encoder(modality, cfg).cuda()
                 encoders[modality] = encoder
@@ -96,6 +111,7 @@ def main(cfg: DictConfig) -> None:
             targets, cut = get_targets(dataframes, cfg.general.n_outs)
             dataset_test = MultimodalDataset(test_datasets, return_mask=True)
             test_data = SurvivalDataset(dataset_test, *targets["test"])
+
             loader = torch.utils.data.DataLoader(
                 test_data, shuffle=False, batch_size=24
             )
@@ -120,7 +136,7 @@ def main(cfg: DictConfig) -> None:
                     encoder, embedding_dim=cfg.general.dim, n_outs=cfg.general.n_outs
                 )
                 model.load_state_dict(
-                    torch.load(f"./models/drimsurv_split_{int(fold)}.pth")
+                    (f"./models/drimsurv_split_{int(fold)}.pth")
                 )
             else:
                 if cfg.method == "max":
@@ -196,9 +212,25 @@ def main(cfg: DictConfig) -> None:
             logs["ibs"].append(ibs)
             logs["CS"].append(CS)
 
+            if wandb_logging:
+                wandb.log({f"test/split_{int(fold)}/{key}": value[-1] for key, value in logs.items()})
+
         logger.info(
             f"{combination} - CS: {np.mean(logs['CS']):.3f} $\pm$ {np.std(logs['CS']):.3f}"
         )
+
+        final_logs = {}
+        for key, value in logs.items():
+            mean, std = np.mean(value), np.std(value)
+            logger.info(f"{key}: {mean:.4f} ± {std:.4f}")
+            final_logs[f"fin/{key}_mean"] = mean
+            final_logs[f"fin/{key}_std"] = std
+
+        final_logs["test_len"] = len(dataset_test)
+
+        if wandb_logging:
+            wandb.log(final_logs)
+            wandb.finish()
 
 
 if __name__ == "__main__":
